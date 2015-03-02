@@ -5,7 +5,7 @@ PROTODIR 		= ../protobuf
 INC				= $(LOGDIR) $(PROTODIR)
 INC_PARAMS		= $(INC:%=-I%)
 CPPFLAGS		= -Wall ${INC_PARAMS} -O2 -std=c++11 -g
-LDFLAGS			= -luuid -lpthread -lzmqpp -lzmq -lprotobuf -Wl,--as-needed
+LDFLAGS			= -lpthread -lzmqpp -lzmq -lprotobuf -luuid -Wl,--as-needed
 SOURCES			= $(wildcard src/worker/*.cpp) 
 TARGETS			= $(SOURCES:%.cpp=%)
 
@@ -15,7 +15,6 @@ clean:
 	${RM} *.obj *~* ${TARGETS}
 
 ${TARGETS}:
-	$(MAKE) -C ../protobuf
 	${CPP} ${CPPFLAGS} -o $@ ${@:%=%.cpp} $(wildcard ../protobuf/bin/*.o)  ${LDFLAGS}
 
 .PHONY: all

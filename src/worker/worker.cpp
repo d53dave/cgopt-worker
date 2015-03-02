@@ -5,10 +5,13 @@
 #include <iostream>
 #include <uuid/uuid.h>
 #include <random>
+#include <unistd.h>
+#include <google/protobuf/text_format.h>
 
-using namespace std;
-
-void process_work(string host, int port);
+void debug_request(cgopt_request request);
+void debug_response(cgopt_response response);
+void process_work(std::string host, int port);
+void log_proto_array(const google::protobuf::RepeatedField<double> & iter);
 
 auto console = spdlog::stdout_logger_mt("console");
 
@@ -16,8 +19,8 @@ int main(int argc, char *argv[]) {
 	process_work("localhost", 5555);
 }
 
-void process_work(string host, int port) {
-	const string endpoint = "tcp://" + host + ":" + to_string(port).c_str();
+void process_work(std::string host, int port) {
+	const std::string endpoint = "tcp://" + host + ":" + std::to_string(port).c_str();
 
 	console->info() << "Client Startup!";
 
@@ -25,7 +28,7 @@ void process_work(string host, int port) {
 	zmqpp::context context;
 
 	// generate a push socket
-	zmqpp::socket_type type = zmqpp::socket_type::push;
+	zmqpp::socket_type type = zmqpp::socket_type::req;
 	zmqpp::socket socket(context, type);
 
 	// open the connection
@@ -33,6 +36,7 @@ void process_work(string host, int port) {
 	socket.connect(endpoint);
 
 	while (true) {
+		usleep(2000000); //1sec
 		zmqpp::message req;
 		// compose a message from a string and a number
 		cgopt_request request;
@@ -49,22 +53,57 @@ void process_work(string host, int port) {
 
 		console->info() << "Received response";
 
-		string serialized_res;
+		std::string serialized_res;
 
 		req >> serialized_res;
 
 		cgopt_response cgresp;
 		cgresp.ParseFromString(serialized_res);
 
-		auto a = cgresp.data();
+		//assert(request.id() != cgresp.id());
+		if (cgresp.type() == cgresp.WORK && !cgresp.has_error()) {
+			auto a = cgresp.data();
 
-		double sum = std::accumulate(a.begin(), a.end(), 0.0);
-		double mean = sum / a.size();
+			log_proto_array(cgresp.data());
 
-		double sq_sum = std::inner_product(a.begin(), a.end(), a.begin(), 0.0);
-		double stdev = std::sqrt(sq_sum / a.size() - mean * mean);
+			double sum = std::accumulate(a.begin(), a.end(), 0.0);
+			double mean = sum / a.size();
 
-		console->info() << "ID="<< cgresp.id() <<"\nData Avg="<<mean<<" StDev="<<stdev;
+			double sq_sum = std::inner_product(a.begin(), a.end(), a.begin(),
+					0.0);
+			double stdev = std::sqrt(sq_sum / a.size() - mean * mean);
+
+			console->info() << "ID=" << cgresp.id() << "\nData Avg=" << mean
+					<< " StDev=" << stdev;
+		} else {
+			console->warn() << "Response " << cgresp.id() << " has error "
+					<< cgresp.error();
+		}
+
 	}
 
+}
+
+
+void log_proto_array(const google::protobuf::RepeatedField<double> & iter) {
+	std::string s;
+	for (auto it = iter.begin(); it != iter.end(); ++it) {
+		s += std::to_string((double)*it);
+		s += ", ";
+	}
+	console->info() << "Repeatedfield: [" << s << "]";
+}
+
+
+void debug_request(cgopt_request request) {
+	std::string s;
+	google::protobuf::TextFormat::PrintToString(request, &s);
+	console->info() << "Request " << s;
+}
+
+void debug_response(cgopt_response response) {
+
+	std::string s;
+	google::protobuf::TextFormat::PrintToString(response, &s);
+	console->info() << "Response " << s;
 }
