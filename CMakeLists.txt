@@ -22,6 +22,8 @@ if(ZMQPP_FOUND)
     list(APPEND ${PROJECT_NAME}_EXTERNAL_LIBRARIES "${ZMQPP_LIBRARIES}")
 endif()
 
+find_library(CUDA REQUIRED)
+
 include(ExternalProject)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/tidings)
@@ -39,11 +41,9 @@ ExternalProject_Add(
 )
 
 set(SOURCE_FILES
-    src/msgqueueclient.hpp
-    src/producer.cpp
-    src/worker.cpp
-    src/worker.hpp
-    README.md)
+        src/Worker.cpp
+        src/Worker.h
+        src/CUDA/OptRunner.cpp src/CUDA/OptRunner.h src/main.cpp)
 
 add_executable(csaopt_worker ${SOURCE_FILES})
 target_link_libraries(csaopt_worker zmq zmqpp)
