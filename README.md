@@ -22,7 +22,7 @@ The ansible deployment actually gets the zmqpp source from GitHub, builds
 and installs it.
 
 After fulfilling the dependencies, the build should be a simple
-`cmake . && make csaopt-tidings csaopt_worker`
+`cmake . && make`
 
 Note that building csaopt-tidings generates required headers for the actual build.
 
