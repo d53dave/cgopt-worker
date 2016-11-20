@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.2)
 project(csaopt_worker)
 
 set(CMAKE_CXX_STANDARD 11) # adds -std=c++11
@@ -10,24 +10,23 @@ include_directories("${PROJECT_INCLUDE_DIR}")
 
 # ZMQ
 find_package(ZMQ REQUIRED)
-if(ZMQ_FOUND)
+if (ZMQ_FOUND)
     include_directories(${ZMQ_INCLUDE_DIRS})
     list(APPEND ${PROJECT_NAME}_EXTERNAL_LIBRARIES "${ZMQ_LIBRARIES}")
-endif()
+endif ()
 
 # ZMQPP
 find_package(ZMQPP REQUIRED)
-if(ZMQPP_FOUND)
+if (ZMQPP_FOUND)
     include_directories(${ZMQPP_INCLUDE_DIRS})
     list(APPEND ${PROJECT_NAME}_EXTERNAL_LIBRARIES "${ZMQPP_LIBRARIES}")
-endif()
+endif ()
 
-find_library(CUDA REQUIRED)
+find_package(Threads REQUIRED)
+find_package(CUDA REQUIRED)
 
 include(ExternalProject)
-
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/tidings)
-
 set(CAPNPC_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/tidings)
 
 ExternalProject_Add(
@@ -43,7 +42,18 @@ ExternalProject_Add(
 set(SOURCE_FILES
         src/Worker.cpp
         src/Worker.h
-        src/CUDA/OptRunner.cpp src/CUDA/OptRunner.h src/main.cpp)
+        src/main.cpp)
 
-add_executable(csaopt_worker ${SOURCE_FILES})
-target_link_libraries(csaopt_worker zmq zmqpp)
+set(CUDA_FILES
+        src/model/CudaManaged.h
+        src/CUDA/OptRunner.cu
+        src/CUDA/OptRunner.h)
+
+cuda_compile(CUDA_Os ${CUDA_FILES} OPTIONS -G)
+
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}--relocatable-device-code=false
+        -gencode arch=compute_30,code=compute_30 -gencode arch=compute_30,code=sm_30)
+
+cuda_add_executable(csaopt_worker ${CUDA_Os} ${SOURCE_FILES})
+target_link_libraries(csaopt_worker zmq zmqpp Threads::Threads)
+add_dependencies(csaopt_worker csaopt-tidings)
