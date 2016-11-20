@@ -1,5 +1,7 @@
 #pragma once
 
-class Worker {
+namespace CSAOpt {
+    class Worker {
 
-};
+    };
+}
