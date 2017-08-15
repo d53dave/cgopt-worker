@@ -36,3 +36,6 @@
 # Fodlers
 doc/
 build/
+
+# CMake stuff
+cmake-build-debug/
