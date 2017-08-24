@@ -39,13 +39,22 @@ ExternalProject_Add(
         INSTALL_COMMAND ""
 )
 
+ExternalProject_Add(
+        cpp-hocon
+        GIT_REPOSITORY https://github.com/puppetlabs/cpp-hocon
+        GIT_TAG 0.1.5
+        TIMEOUT 10
+        LOG_DOWNLOAD ON
+        BUILD_COMMAND "make"
+        INSTALL_COMMAND ""
+)
+
 set(SOURCE_FILES
-        src/Worker.cpp
-        src/Worker.h
+        src/MessageQueueClient.h, src/MessageQueueClient.cpp
+        src/kj/KjStringPipe.h,
         src/main.cpp)
 
 set(CUDA_FILES
-        src/model/CudaManaged.h
         src/CUDA/OptRunner.cu
         src/CUDA/OptRunner.h)
 
@@ -54,6 +63,6 @@ cuda_compile(CUDA_Os ${CUDA_FILES} OPTIONS -G)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}--relocatable-device-code=false
         -gencode arch=compute_30,code=compute_30 -gencode arch=compute_30,code=sm_30)
 
-cuda_add_executable(csaopt_worker ${CUDA_Os} ${SOURCE_FILES})
+cuda_add_executable(csaopt_worker ${CUDA_FILES} ${SOURCE_FILES})
 target_link_libraries(csaopt_worker zmq zmqpp Threads::Threads)
 add_dependencies(csaopt_worker csaopt-tidings)
