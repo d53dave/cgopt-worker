@@ -5,7 +5,9 @@
 #pragma once
 namespace CSAOpt {
     class MessageQueueClient {
+    public:
 
+    private:
+        runPlumbingRepReqLoop(std::string host, unsigned int port);
     };
-
 }
