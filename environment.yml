@@ -1,4 +1,4 @@
-name: csaopt
+name: csaopt-worker
 channels:
   - conda-forge
 dependencies:
@@ -8,12 +8,6 @@ dependencies:
   - boto3
   - arrow
   - click
-  - requests
-  - pyzmq
-  - ujson
-  - tornado
-  - pycapnp
-  - zstandard
   - pytest
   - pytest-cov
   - Sphinx
@@ -22,7 +16,10 @@ dependencies:
   - flake8
   - pytest-timeout
   - pytest-mock
+  - pyhocon
+  - mypy
   - pip:
-    - pyhocon
-    - mypy
+    - aiokafka
+    - lz4tools
+    - xxhash
     - sphinxcontrib-napoleon
