@@ -1,4 +1,5 @@
 # CSAOpt Worker
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_shield)
 
 This project provides the code for CSAOpt worker nodes. This is deployed on the
 target instances via Docker images. Workers pull work from Kafka, compile the
@@ -57,3 +58,10 @@ infrastructure of `numba`. This works by setting the `NUMBA_ENABLE_CUDASIM` env
 variable to 1. This switches numba to the cuda simulator mode, which is run on
 the CPU and can be inspected for debugging. Refer to
 [the documentation](https://numba.pydata.org/doc.html) for further details.
+=======
+automatically to the target machines using docker. That being said, manual building
+should still be relatively straightforward. Dependencies are managed by `conda`
+and are listed in the `environment.yml`.
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_large)
