@@ -16,10 +16,12 @@ dependencies:
   - flake8
   - pytest-timeout
   - pytest-mock
-  - pyhocon
   - mypy
+  - msgpack-python
   - pip:
+    - gputil
     - aiokafka
     - lz4tools
     - xxhash
+    - pyhocon
     - sphinxcontrib-napoleon
