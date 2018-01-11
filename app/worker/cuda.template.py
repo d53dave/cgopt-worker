@@ -5,23 +5,34 @@ import math
 from numba import cuda, $precision
 from numba.cuda.random import $random_gen_type$precision
 
+
+@cuda.jit(device=True)
+$context
+
+
 @cuda.jit(device=True)
 $initialize
+
 
 @cuda.jit(device=True)
 $cool
 
+
 @cuda.jit(device=True)
 $generate_next
+
 
 @cuda.jit(device=True)
 $evaluate
 
+
 @cuda.jit(device=True)
 $acceptance_func
 
+
 @cuda.jit
 def simulated_annealing(max_steps, initial_temp, dimensionality, rands, states):
+    ctx = context()
     thread_id = cuda.grid(1)
     step = 0
     rand_gen_idx = 0
