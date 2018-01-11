@@ -1,4 +1,6 @@
 # CSAOpt Worker
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_shield)
+
 
 This project provides the worker code for CSAOpt.
 This is deployed on the target instances via Docker images.
@@ -29,3 +31,7 @@ This is not intended to be built by hand as it will be deployed
 automatically to the target machines using docker. That being said, manual building
 should still be relatively straightforward. Dependencies are managed by `conda`
 and are listed in the `environment.yml`.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_large)
