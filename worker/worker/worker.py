@@ -1,10 +1,12 @@
-
+import sys
+import traceback
 import numpy as np
 
 from numba.cuda.random import create_xoroshiro128p_states
 from typing import Dict, Any
 
 from .modulegenerator import ModuleGenerator
+from . import OptResult
 
 # TODO: add this to the model documentation
 # Numba(like cuRAND) uses the Box - Muller transform 
@@ -21,15 +23,20 @@ class Worker():
         self.cuda = None
 
     async def run(self, model: Dict[str, Any]):
-        opt_configuration = self._extract_opt_configuration(model)
-        self.gen.cuda_module(opt_configuration)
-        rng_states = create_xoroshiro128p_states(3, seed=1)
-        cuda = self.gen.cuda_module(opt_configuration)
+        try:
+            opt_configuration = self._extract_opt_configuration(model)
+            self.gen.cuda_module(opt_configuration)
+            rng_states = create_xoroshiro128p_states(3, seed=1)
+            cuda = self.gen.cuda_module(opt_configuration)
 
-        print('Generated module: {} =\n{}'.format(cuda, dir(cuda)))
-
-        states = np.array([(0.0, 0.0, 0.0)] * 3, dtype=np.float32)  # TODO: fix this, how?
-        cuda.simulated_annealing[1, 3](100, 100, 3, rng_states, states)
+            values = np.array([0.0] * 3, dtype=np.float32)
+            states = np.array([(0.0, 0.0, 0.0)] * 3, dtype=np.float32)  # TODO: fix this, how?
+            cuda.simulated_annealing[1, 3](100, 100, 3, rng_states, states)
+            
+            return OptResult(states, values, None)
+        except Exception as e:
+            type_, value_, traceback_ = sys.exc_info()
+            return OptResult(None, None, (type_, value_, traceback.format_tb(traceback_)))
 
     def _extract_opt_configuration(self, model: Dict[str, Any]) -> Dict[str, str]:
         opt_configuration = {}
