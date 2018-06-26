@@ -21,6 +21,7 @@ class QueueClient:
         management_recv_topic = conf['kafka.topics.management_recv']
         data_recv_topic = conf['kafka.topics.data_recv']
         management_send_topic = conf['kafka.topics.management_send']
+        heartbeat_time_seconds = conf['kafka.heartbeat_seconds']
 
         consumer = AIOKafkaConsumer(
             [management_recv_topic, data_recv_topic],
@@ -46,7 +47,7 @@ class QueueClient:
         await self.producer.start()
 
         asyncio.Task(self._periodic_send_stats())
-        asyncio.Task(self._send_heartbeat())
+        asyncio.Task(self._send_heartbeat(heartbeat_time_seconds))
 
         return self
 
@@ -62,17 +63,19 @@ class QueueClient:
         self.data_recv_topic: str = data_recv_topic
         self.consumer = consumer
         self.producer = producer
+        self.send_heartbeat = True
+        self.deployed_model = None
 
     async def _send_heartbeat(self, heartbeat_time_seconds):
-        while(True):
-            await self._send_one()
+        while(self.send_heartbeat):
+            await self._send_one(self.management_send_topic, key='heartbeat', value='')
             await asyncio.sleep(heartbeat_time_seconds)
 
     async def _periodic_send_stats(self):
         while True:
             print('periodic')
             await asyncio.sleep(2)
-            await self._send_one('csaopt.stats.in.t', value={
+            await self._send_one('csaopt.stats.in.t', key='stats', value={
                 'cpu': psutil.cpu_percent(interval=1),
                 'mem': psutil.virtual_memory(),
                 'gpu': GPUtil.showUtilization()
@@ -82,17 +85,27 @@ class QueueClient:
         try:
             # Consume messages
             async for msg in self.consumer:
-                log.debug("consumed: ", msg.topic, msg.partition, msg.offset,
-                          msg.key, msg.value, msg.timestamp)
+                log.debug('consumed: {} {} {} {} {} {}'.format(msg.topic, msg.partition, msg.offset,
+                          msg.key, msg.value, msg.timestamp))
                 if msg.topic == self.management_recv_topic:
-                    pass
+                    if msg.key == 'model':
+                        self._handle_model_deploy(msg.value)
                 if msg.topic == self.data_recv_topic:
                     pass
                 print(msg)
         finally:
             # Will leave consumer group; perform autocommit if enabled.
+            self.send_heartbeat = False
             await self.consumer.stop()
             await self.producer.stop()
+            
+    def _handle_model_deploy(self, model):
+        self.deployed_model = model
+
+    async def wait_for_model(self):
+        while(self.deployed_model is None):
+            asyncio.sleep(0.2)
+        return self.deployed_model
 
     async def _send_one(self, topic, key=None, value=None):
         try:
@@ -102,11 +115,7 @@ class QueueClient:
             # Wait for all pending messages to be delivered or expire.
             pass
 
-    async def submit_job(self, job: Job):
-        # self.submitted[job.id] = job
-        pass
-
-    def get_results(id):
+    def get_results(self, id):
         pass
 
     class _KeySerializer:
