@@ -6,7 +6,7 @@ from numba.cuda.random import create_xoroshiro128p_states
 from typing import Dict, Any
 
 from .modulegenerator import ModuleGenerator
-from . import OptResult
+from .. import OptResult
 
 # TODO: add this to the model documentation
 # Numba(like cuRAND) uses the Box - Muller transform 

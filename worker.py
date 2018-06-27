@@ -3,7 +3,7 @@ import click
 import asyncio
 from typing import Dict, Any
 from asyncio.selector_events import BaseSelectorEventLoop
-from app.messagequeue.queueclient import QueueClient
+from worker.messagequeue.queueclient import QueueClient
 
 
 async def send_heartbeat(client: QueueClient):
@@ -14,6 +14,7 @@ async def send_heartbeat(client: QueueClient):
 
 async def run_client(loop: BaseSelectorEventLoop, config: Dict[str, Any]):
     client = await QueueClient.create(loop, config)
+    await client.wait_for_model()
     await client._consume()
 
 
