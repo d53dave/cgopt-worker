@@ -17,11 +17,11 @@ log = logging.getLogger(__name__)
 class QueueClient:
 
     @classmethod
-    async def create(cls, ioloop: EventLoop, conf: Dict[str, Any], worker: Worker):
+    async def create(cls, ioloop: EventLoop, conf: Dict[str, Any]):
         management_recv_topic = conf['kafka.topics.management_recv']
         data_recv_topic = conf['kafka.topics.data_recv']
         management_send_topic = conf['kafka.topics.management_send']
-        heartbeat_time_seconds = conf['kafka.heartbeat_seconds']
+        heartbeat_time_seconds = conf['kafka.heartbeat_time_seconds']
 
         consumer = AIOKafkaConsumer(
             [management_recv_topic, data_recv_topic],
