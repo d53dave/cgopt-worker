@@ -18,6 +18,7 @@ dependencies:
   - pytest-mock
   - mypy
   - msgpack-python
+  - msgpack-numpy
   - pip:
     - gputil
     - aiokafka

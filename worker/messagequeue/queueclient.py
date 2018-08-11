@@ -1,5 +1,6 @@
 import logging
 import msgpack
+import msgpack_numpy
 import asyncio
 import psutil
 import GPUtil
@@ -8,16 +9,19 @@ from typing import Dict, Any
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from asyncio.selector_events import BaseSelectorEventLoop as EventLoop
 
-from app.jobs import Job
-from . import Worker
+from . import Job
+from ..cuda.opt_worker import OptimizationWorker
 
 log = logging.getLogger(__name__)
 
+# Loading queueclient.py will cause msgpack_numpy to monkeypatch msgpack, 
+# so that it can handle numerical and array data types provided by numpy
+msgpack_numpy.patch()
 
 class QueueClient:
 
     @classmethod
-    async def create(cls, ioloop: EventLoop, conf: Dict[str, Any]):
+    async def create(cls, ioloop: EventLoop, conf: Dict[str, Any], worker: OptimizationWorker):
         management_recv_topic = conf['kafka.topics.management_recv']
         data_recv_topic = conf['kafka.topics.data_recv']
         management_send_topic = conf['kafka.topics.management_send']
@@ -26,7 +30,7 @@ class QueueClient:
         consumer = AIOKafkaConsumer(
             [management_recv_topic, data_recv_topic],
             loop=ioloop, bootstrap_servers=conf['kafka.servers'],
-            group_id=conf['kafka.consumer_group'],
+            group_id=worker.id,
             key_deserializer=QueueClient._KeyDeserializer(),
             value_deserializer=QueueClient._ValueDeserializer())
 
@@ -57,7 +61,7 @@ class QueueClient:
                  data_recv_topic: str,
                  consumer: AIOKafkaConsumer,
                  producer: AIOKafkaProducer) -> None:
-        self.workers: Dict[str, Worker] = {}
+        self.worker: OptimizationWorker = {}
         self.management_recv_topic: str = management_recv_topic
         self.management_send_topic = management_send_topic
         self.data_recv_topic: str = data_recv_topic
@@ -90,14 +94,21 @@ class QueueClient:
                 if msg.topic == self.management_recv_topic:
                     if msg.key == 'model':
                         self._handle_model_deploy(msg.value)
-                if msg.topic == self.data_recv_topic:
-                    pass
+                elif msg.topic == self.data_recv_topic:
+                    if msg.key == 'job':
+                        if 'worker_id' in msg.value and msg.value['worker_id'] not in self.workers:
+                            pass  # Skip if worker_id is specified and we don't have that worker
+                        else:
+                            self._handle_job(msg.value)
                 print(msg)
         finally:
             # Will leave consumer group; perform autocommit if enabled.
             self.send_heartbeat = False
             await self.consumer.stop()
             await self.producer.stop()
+
+    def _handle_job(self, job):
+        pass
             
     def _handle_model_deploy(self, model):
         self.deployed_model = model
