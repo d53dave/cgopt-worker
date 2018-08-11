@@ -1,6 +1,9 @@
+# pylint: disable=E1101
+
 import sys
 import traceback
 import numpy as np
+import uuid
 
 from numba.cuda.random import create_xoroshiro128p_states
 from typing import Dict, Any
@@ -17,24 +20,26 @@ from .. import OptResult
 # is half the speed of uniformly distributed values.
 
 
-class Worker():
+class OptimizationWorker():
     def __init__(self, conf: Dict[str, Any]) -> None:
         self.gen = ModuleGenerator(template_file=conf['cuda.template_path'])
         self.cuda = None
+        self.id = str(uuid.uuid4())
 
     async def run(self, model: Dict[str, Any]):
         try:
             opt_configuration = self._extract_opt_configuration(model)
-            self.gen.cuda_module(opt_configuration)
             rng_states = create_xoroshiro128p_states(3, seed=1)
             cuda = self.gen.cuda_module(opt_configuration)
 
-            values = np.array([0.0] * 3, dtype=np.float32)
+            dimensions: int = int(opt_configuration['dim'])
+
+            values = np.array([0.0] * dimensions, dtype=np.float32)
             states = np.array([(0.0, 0.0, 0.0)] * 3, dtype=np.float32)  # TODO: fix this, how?
             cuda.simulated_annealing[1, 3](100, 100, 3, rng_states, states)
             
             return OptResult(states, values, None)
-        except Exception as e:
+        except:
             type_, value_, traceback_ = sys.exc_info()
             return OptResult(None, None, (type_, value_, traceback.format_tb(traceback_)))
 
