@@ -22,10 +22,7 @@ async def run_client(loop: BaseSelectorEventLoop, config: Dict[str, Any]):
 @click.option('--kafka',
               default='localhost:9092',
               help='Kafka endpoints in the format host1:port1,...')
-@click.option('--multi-gpu',
-              is_flag=True,
-              help='Turns on multi-gpu mode')
-def run_worker(ctx, kafka, multi_gpu):
+def run_worker(ctx, kafka):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run_client(loop, {}))
     loop.stop()
