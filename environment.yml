@@ -21,8 +21,6 @@ dependencies:
   - msgpack-numpy
   - pip:
     - gputil
-    - aiokafka
-    - lz4tools
-    - xxhash
+    - dramatiq[redis, watch]
     - pyhocon
     - sphinxcontrib-napoleon
