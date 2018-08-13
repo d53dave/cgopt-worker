@@ -1,9 +1,12 @@
 import numpy
 import array
 import math
+import cmath
 
 from numba import cuda, $precision
 from numba.cuda.random import $random_gen_type$precision
+
+$globals
 
 
 @cuda.jit(device=True)
@@ -30,8 +33,11 @@ $evaluate
 $acceptance_func
 
 
+$state_shape
+
+
 @cuda.jit
-def simulated_annealing(max_steps, initial_temp, dimensionality, rands, states):
+def simulated_annealing(max_steps, initial_temp, rands, states):
     ctx = context()
     thread_id = cuda.grid(1)
     step = 0
