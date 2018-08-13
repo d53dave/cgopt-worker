@@ -1,32 +1,41 @@
 #!/usr/bin/env python3
 import click
 import asyncio
+
 from typing import Dict, Any
 from asyncio.selector_events import BaseSelectorEventLoop
-from worker.messagequeue.queueclient import QueueClient
+
+from .worker.tasks import 
 
 
-async def send_heartbeat(client: QueueClient):
-    while True:
+should_run = True
+
+async def sleep_one():
+    while should_run:
         await asyncio.sleep(1)
-        await client._send_one('csaopt.')
-
-
-async def run_client(loop: BaseSelectorEventLoop, config: Dict[str, Any]):
-    client = await QueueClient.create(loop, config)
-    await client.wait_for_model()
-    await client._consume()
-
 
 @click.command()
-@click.option('--kafka',
+@click.option('--redishost',
               default='localhost:9092',
               help='Kafka endpoints in the format host1:port1,...')
-def run_worker(ctx, kafka):
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_client(loop, {}))
-    loop.stop()
+@click.option('--port',
+              default='localhost:9092',
+              help='Kafka endpoints in the format host1:port1,...')
+@click.option('--password',
+              default='localhost:9092',
+              help='Kafka endpoints in the format host1:port1,...')
+def run_worker(ctx, host, port, password):
+    try:
+        # TODO create and start actors
 
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(sleep_one())
+    except KeyboardInterrupt:
+        global should_run
+        should_run = False
+    finally:
+        loop.stop()
+        print('Exiting')
 
 if __name__ == '__main__':
     print('Running CSAOpt')
