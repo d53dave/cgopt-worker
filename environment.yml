@@ -6,8 +6,6 @@ dependencies:
   - numba
   - cudatoolkit
   - boto3
-  - arrow
-  - click
   - pytest
   - pytest-cov
   - Sphinx
