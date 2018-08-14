@@ -7,10 +7,15 @@ import uuid
 
 from numba.cuda.random import create_xoroshiro128p_states
 from pyhocon import ConfigTree
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, Type, NamedTuple
 
 from .modulegenerator import ModuleGenerator
-from .. import OptResult
+
+
+class OptResult(NamedTuple):
+    values: np.ndarray
+    states: np.ndarray
+    failure: Tuple[Type[Exception], Exception, str]
 
 # TODO: add this to the model documentation
 # Numba(like cuRAND) uses the Box - Muller transform 
