@@ -1,88 +1,89 @@
+import os
 import psutil
 import GPUtil
 import logging
+import dramatiq
 
 from enum import Enum
 from pyhocon import ConfigTree, ConfigFactory
 from dramatiq import GenericActor
+from typing import Any, Dict, Union
 
-from ..cuda.opt_worker import OptimizationWorker
+from ..cuda.opt_worker import OptimizationWorker, OptResult
 
 log = logging.getLogger(__name__)
+
+queue_id = os.environ.get('WORKER_QUEUE_ID')
+assert queue_id is not None
+
 
 class WorkerCommand(Enum):
     DeployModel = 'deploy_model'
     RunOptimization = 'run_optimization'
-    Shutdown = 'shutdown'
+
 
 class PingActor(GenericActor):
     class Meta:
-        queue_name = 'default'
-
-    def set_name(self, name_prefix: str, worker_id: str) -> None:
-        self.name = name_prefix + worker_id
+        queue_name = queue_id
+        store_results = True
 
     def get_task_name(self) -> str:
-        return self.name
+        return 'ping'
 
-    def perform(self):
+    def perform(self) -> str:
         return 'pong'
 
 
 class StatsActor(GenericActor):
     class Meta:
-        queue_name = 'default'
-
-    def __init__(self):
-        self.worker_id = ''
-
-    def set_name(self, name_prefix: str, worker_id: str) -> None:
-        self.name = name_prefix + worker_id
+        queue_name = queue_id
+        store_results = True
 
     def get_task_name(self) -> str:
-        return self.name
+        return 'stats'
 
-    def perform(self):
+    def perform(self) -> Dict[str, Any]:
+        try:
+            gpu = GPUtil.getGPUs()
+        except Exception as e:
+            gpu = str(e)
         return {
             'cpu': psutil.cpu_percent(interval=1),
             'mem': psutil.virtual_memory(),
-            'gpu': GPUtil.showUtilization()
+            'gpu': gpu
         }
 
 
-class WorkerActor(GenericActor):
+class OptimizationActor(GenericActor):
     class Meta:
-        queue_name = 'default'
+        queue_name = queue_id
+        store_results = True
 
-    def __init__(self):
-        self.conf = {}
-
-    def init_opt_worker(self, conf: ConfigTree):
+    def init_opt_worker(self, conf: ConfigTree) -> None:
         self.conf = conf
         self.opt_worker = OptimizationWorker(conf)
 
-    def get_task_name(self):
-        return self.conf.get('tasks.worker.prefix', '') + str(self.opt_worker.id)
+    def get_task_name(self) -> str:
+        return 'optimization'
 
-    def perform(self, cmd, payload):
+    def perform(self, cmd, payload) -> Union[str, OptResult]:
         print('WorkerActor called with cmd={} and payload={}'.format(cmd, payload))
         if cmd == WorkerCommand.DeployModel.value:
-            self.opt_worker.compile_model(payload)
+            try:
+                self.opt_worker.compile_model(payload)
+                return ''
+            except Exception as e:
+                return str(e)
         elif cmd == WorkerCommand.RunOptimization.value:
-            self.opt_worker.run(payload)
-        elif cmd == WorkerCommand.Shutdown.value:
-            self.conf['worker.should_run'] = False
+            opt_result = self.opt_worker.run(payload)
+            return opt_result.to_dict()
         else:
             raise AttributeError('Command does not exist: ' + str(cmd))
 
 
 internal_config = ConfigFactory.parse_file('worker/internal/internal.conf')
 
-WorkerActor.init_opt_worker(internal_config)
-log.info('Created worker actor "%s"', WorkerActor.get_task_name())
-StatsActor.set_name(internal_config.get(
-    'tasks.stats.prefix', ''), WorkerActor.opt_worker.id)
-log.info('Created stats actor "%s"', StatsActor.get_task_name())
-PingActor.set_name(internal_config.get(
-    'tasks.ping.prefix', ''), WorkerActor.opt_worker.id)
-log.info('Created ping actor "%s"', PingActor.get_task_name())
+OptimizationActor.init_opt_worker(internal_config)  # type: ignore # pylint: disable=E1120
+
+for actor in dramatiq.get_broker().get_declared_actors():
+    log.info('Declared actor: %s', actor)
