@@ -1,6 +1,8 @@
 # CSAOpt Worker
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_shield)
+[![Build Status](https://travis-ci.org/d53dave/csaopt-worker.svg?branch=master)](https://travis-ci.org/d53dave/csaopt-worker)
+[![Coverage Status](https://coveralls.io/repos/github/d53dave/csaopt-worker/badge.svg?branch=master)](https://coveralls.io/github/d53dave/csaopt-worker?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/e97f8c54e6e35787041f/maintainability)](https://codeclimate.com/github/d53dave/csaopt-worker/maintainability)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_shield)
 
 This project provides the code for CSAOpt worker nodes. This is deployed on the
 target instances via Docker images. Workers pull work from Kafka, compile the
