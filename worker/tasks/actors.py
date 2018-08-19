@@ -67,11 +67,11 @@ class OptimizationActor(GenericActor):
         return 'optimization'
 
     def perform(self, cmd, payload) -> Union[str, OptResult]:
-        print('WorkerActor called with cmd={} and payload={}'.format(cmd, payload))
+        log.debug(
+            'WorkerActor called with cmd={} and payload={}'.format(cmd, payload))
         if cmd == WorkerCommand.DeployModel.value:
             try:
-                self.opt_worker.compile_model(payload)
-                return ''
+                return self.opt_worker.compile_model(payload)
             except Exception as e:
                 return str(e)
         elif cmd == WorkerCommand.RunOptimization.value:
@@ -83,7 +83,8 @@ class OptimizationActor(GenericActor):
 
 internal_config = ConfigFactory.parse_file('worker/internal/internal.conf')
 
-OptimizationActor.init_opt_worker(internal_config)  # type: ignore # pylint: disable=E1120
+# pylint: disable=E1120
+OptimizationActor.init_opt_worker(internal_config)  # type: ignore
 
 for actor in dramatiq.get_broker().get_declared_actors():
     log.info('Declared actor: %s', actor)

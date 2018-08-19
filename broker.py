@@ -31,8 +31,9 @@ else:
     host = os.environ.get('REDIS_HOST', 'localhost')
     port = os.environ.get('REDIS_PORT', 6379)
     pwd = os.environ.get('REDIS_PWD')
-    broker = RedisBroker(host='localhost', port=6379, password=pwd)
-    broker.add_middleware(Results(backend=RedisBackend()))
+    broker = RedisBroker(host=host, port=port, password=pwd)
+    broker.add_middleware(
+        Results(backend=RedisBackend(client=broker.client, encoder=MsgPackEncoder())))
 
 dramatiq.set_broker(broker)
 dramatiq.set_encoder(MsgPackEncoder())
