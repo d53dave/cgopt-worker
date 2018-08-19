@@ -1,11 +1,7 @@
-language: generic
+language: python
 
-matrix:
-  include:
-    - os: linux
-      dist: trusty
-
-sudo: required
+os: linux
+dist: trusty
 
 env:
   global:
@@ -34,4 +30,4 @@ after_script:
   - if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
 
 after_success:
-  - coveralls;
+  - coveralls
