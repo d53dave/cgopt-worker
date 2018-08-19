@@ -1,0 +1,37 @@
+language: generic
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+
+sudo: required
+
+env:
+  global:
+    - CC_TEST_REPORTER_ID=57a2d5465c28a2de7f343c5c859259b2d5b473a6fee413edd1f4503dc911fe38
+    - NUMBA_ENABLE_CUDASIM=1
+
+before_script:
+  - curl -L https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh;
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > cc-test-reporter;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - chmod +x ./cc-test-reporter
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+  - conda env create --name csaopt-worker-travisci
+  - source activate csaopt-worker-travisci
+  - ./cc-test-reporter before-build
+
+script: py.test --cov=worker -v tests
+
+after_script:
+  - coverage xml
+  - if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
+
+after_success:
+  - coveralls;
