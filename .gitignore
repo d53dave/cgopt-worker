@@ -40,3 +40,4 @@ build/
 # CMake stuff
 cmake-build-debug/
 .vscode/
+**/.pytest_cache
