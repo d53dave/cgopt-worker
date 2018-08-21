@@ -5,6 +5,7 @@ import traceback
 import numpy as np
 import uuid
 import logging
+import os
 
 from numba.cuda.random import create_xoroshiro128p_states
 from pyhocon import ConfigTree
@@ -19,6 +20,10 @@ Failure = Optional[
     Tuple[Optional[Type[BaseException]],
           Optional[BaseException],
           str]]
+
+
+def _is_debug_run():
+    return os.environ.get('NUMBA_ENABLE_CUDASIM') == '1'
 
 
 class OptResult():
@@ -73,6 +78,9 @@ class OptimizationWorker():
             log.exception(e)
             return str(e)
 
+    def _get_blocks_per_grid(self, array_size, threads_per_block) -> int:
+        return (array_size + (threads_per_block - 1)) // threads_per_block
+
     def run(self, opt_params) -> OptResult:
         try:
             assert self.opt_module is not None
@@ -84,19 +92,29 @@ class OptimizationWorker():
                 'max_steps', self.conf['defaults.max_steps'])
             initial_temp = opt_params.get(
                 'initial_temp', self.conf['defaults.initial_temp'])
-            blocks_per_grid = opt_params.get(
-                'blocks_per_grid', self.conf['defaults.blocks_per_grid'])
-            grids_per_block = opt_params.get(
+            thread_count = opt_params.get(
+                'thread_count', self.conf['defaults.thread_count'])
+            threads_per_block = opt_params.get(
                 'threads_per_block', self.conf['defaults.threads_per_block'])
+            blocks_per_grid = opt_params.get(
+                'blocks_per_grid')
+
+            if blocks_per_grid is None:
+                blocks_per_grid = self._get_blocks_per_grid(
+                    thread_count, threads_per_block)
+
+            if _is_debug_run():
+                blocks_per_grid = 1
+                threads_per_block = 1
 
             empty_state = self.opt_module.empty_state()  # type: ignore
 
-            result_size: int = blocks_per_grid * grids_per_block
+            result_size: int = thread_count
             values = np.array([0.0] * result_size, dtype=precision)
             states = np.array([empty_state] * result_size)  # type: ignore
             rng_states = create_xoroshiro128p_states(dimensions, seed=1)
 
-            self.opt_module.simulated_annealing[blocks_per_grid, grids_per_block](  # type: ignore
+            self.opt_module.simulated_annealing[blocks_per_grid, threads_per_block](  # type: ignore
                 max_steps, initial_temp, rng_states, states, values)
 
             return OptResult(values, states, None)
