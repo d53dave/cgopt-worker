@@ -23,7 +23,7 @@ Failure = Optional[
 
 
 def _is_debug_run():
-    return os.environ.get('NUMBA_ENABLE_CUDASIM') == '1'
+    return str(os.environ.get('NUMBA_ENABLE_CUDASIM')) == '1'
 
 
 class OptResult():
@@ -106,6 +106,7 @@ class OptimizationWorker():
             if _is_debug_run():
                 blocks_per_grid = 1
                 threads_per_block = 1
+                thread_count = 1
 
             empty_state = self.opt_module.empty_state()  # type: ignore
 
