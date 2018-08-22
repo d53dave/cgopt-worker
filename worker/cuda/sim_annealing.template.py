@@ -67,7 +67,7 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
     energy = evaluate(state)
 
     temperature = initial_temp
-    while(step < max_steps):
+    while(step < max_steps and temperature > 0):
         while(rand_gen_idx < $dim):
             random_values[rand_gen_idx] = $random_gen_type$precision(rands, thread_id)
             rand_gen_idx += 1
