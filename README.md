@@ -4,29 +4,36 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/e97f8c54e6e35787041f/maintainability)](https://codeclimate.com/github/d53dave/csaopt-worker/maintainability)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_shield)
 
-This project provides the code for CSAOpt worker nodes. This is deployed on the
-target instances via Docker images. Workers pull work from Kafka, compile the
-models, run optimizations on GPU hardware and and post results back to Kafka.
+This project provides the code for CSAOpt worker nodes. This is deployed on
+target instances via Docker images. Workers pull work from the broker, compile
+models, run optimizations on GPU hardware and and post results back to the broker.
 Initially based on C++11 (for CUDA) this project now uses
 [numba](http://numba.pydata.org), which provides JIT compilation of a subset
-of python (called nopython) into CUDA kernels (directly via PTX assembly).
+of python (called nopython) into CUDA kernels directly via PTX assembly.
 
 ## Host Requirements
 
 Machine hosting the worker containers need to run docker (duh!) and are
 subject to following requirements
-(mainly dictated by [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)):
+(mainly dictated by [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker)):
 
 - GNU/Linux x86_64 with kernel version > 3.10
-- Docker >= 1.9 (official docker-engine, docker-ce or docker-ee only)
+- Docker >= 1.12
 - NVIDIA GPU with Architecture > Fermi (2.1)
-- NVIDIA drivers >= 340.29 with binary nvidia-modprobe
+- NVIDIA drivers ~= 361.93 (untested on older versions)
+
+However, if you are looking at this repository, chances are you might be interested
+in debugging worker code or your own models. If that is the case, you will be glad
+to hear that the debug-enabled version (via the usual optimization config, refer to
+the CSAOpt documentation) will run without `nvidia-docker`, as the worker will use
+Numba's GPU simulator, running the worker code solely on CPU (and thusly, much much
+slower).
 
 ## Compilation of Optimization Models
 
 The models (i.e. model specific implementation of the Simulated Annealing
 routines) are serialized on the application master and transmitted to the
-workers. Workers use rudimentary templates to generate the actual optimization
+workers. Workers use a rudimentary file template to generate the actual optimization
 code at runtime. This code is then loaded and JIT-ed by numba, which then runs
 the optimization kernels on the GPU hardware.
 
@@ -35,8 +42,8 @@ the optimization kernels on the GPU hardware.
 The workers run on hardware that has Nvidia GPUs available and uses CUDA
 to run the parallelized optimization algorithm. To minimize the platform
 dependency, the host machines need not provide any CUDA specific packages,
-since the Docker image already provides all CUDA requirements. Only the GPU
-driver is required on the host.
+since the worker Docker image already provides all CUDA requirements.
+Only the GPU driver is required on the host.
 
 ## Development
 
@@ -47,20 +54,29 @@ building should still be relatively straightforward. Dependencies are managed by
 all required dependencies, from the project root execute:
 
 ```bash
-conda env create # this will use the environment.yml
+# Create environement and resolve/install all dependencies listed in environment.yml
+conda env create
 
 # after downloading all deps (might take a while)
 source activate csaopt-worker
-
-# Then, in the virtualenv
-./worker --kafka <kafka_host1:port,...> --topics <topic1,> --group <group> [--multi-gpu]
 ```
 
-Kernels can be executed by hand, even without GPU hardware, using the debugging
-infrastructure of `numba`. This works by setting the `NUMBA_ENABLE_CUDASIM` env
-variable to 1. This switches numba to the cuda simulator mode, which is run on
+Before running optimizations on local GPU hardware, make sure you have [docker](https://docs.docker.com/install/)
+and [nvidia-docker2 installed](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-2.0)).
+
+```bash
+# Then, in the activated environment
+dramatiq --processes 1 --threads 3 broker:broker worker.tasks.actors
+```
+
+Kernels can even be executed manually, even without GPU hardware, using the debugging
+infrastructure of `Numba`. This works by setting the `NUMBA_ENABLE_CUDASIM` env
+variable to 1. This switches numba to the CUDA simulator mode, which is run on
 the CPU and can be inspected for debugging. Refer to
 [the documentation](https://numba.pydata.org/doc.html) for further details.
 
+You can also have a look at the [test suite](tests/).
+
 ## License
+
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fd53dave%2Fcsaopt-worker?ref=badge_large)
