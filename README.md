@@ -7,7 +7,7 @@
 This project provides the code for CSAOpt worker nodes. This is deployed on
 target instances via Docker images. Workers pull work from the broker, compile
 models, run optimizations on GPU hardware and and post results back to the broker.
-Initially based on C++11 (for CUDA) this project now uses
+Initially written in C++11 (for CUDA) this project now uses
 [numba](http://numba.pydata.org), which provides JIT compilation of a subset
 of python (called nopython) into CUDA kernels directly via PTX assembly.
 
@@ -59,15 +59,14 @@ conda env create
 
 # after downloading all deps (might take a while)
 source activate csaopt-worker
-```
 
-Before running optimizations on local GPU hardware, make sure you have [docker](https://docs.docker.com/install/)
-and [nvidia-docker2 installed](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-2.0)).
-
-```bash
 # Then, in the activated environment
 dramatiq --processes 1 --threads 3 broker:broker worker.tasks.actors
 ```
+
+This will start the broker client that accepts model deployments and optimization jobs.
+Note that running this without `docker` and `nvidia-docker` requires an installed CUDA
+toolkit in addition to the required Nvidia graphics drivers.
 
 Kernels can even be executed manually, even without GPU hardware, using the debugging
 infrastructure of `Numba`. This works by setting the `NUMBA_ENABLE_CUDASIM` env
