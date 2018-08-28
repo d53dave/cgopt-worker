@@ -75,6 +75,10 @@ class OptimizationActor(GenericActor):
             except Exception as e:
                 return str(e)
         elif cmd == WorkerCommand.RunOptimization.value:
+            if self.opt_worker.model_compiled is False:
+                raise AssertionError(
+                    'Tried to run optimization without deployed model')
+
             opt_result = self.opt_worker.run(payload)
             return opt_result.to_dict()
         else:

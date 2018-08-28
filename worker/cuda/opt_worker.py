@@ -62,6 +62,7 @@ class OptimizationWorker():
         self.conf = conf['optimization']
         self.gen = ModuleGenerator(conf['cuda'])
         self.opt_configuration: Dict[str, str] = {}
+        self.model_compiled = False
         self.opt_module: object = None
         self.id = str(uuid.uuid4())
 
@@ -73,6 +74,7 @@ class OptimizationWorker():
                 self.opt_configuration)
             log.info('Model "%s" was successfully loaded loaded as a module',
                      self.opt_configuration['name'])
+            self.model_compiled = True
             return 'model_deployed'
         except Exception as e:
             log.exception(e)
