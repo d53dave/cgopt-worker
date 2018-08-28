@@ -2,6 +2,7 @@ language: python
 
 os: linux
 dist: trusty
+sudo: false  # trusty + sudo: false allows container based builds
 
 env:
   global:
