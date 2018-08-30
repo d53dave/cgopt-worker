@@ -73,14 +73,14 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
             rand_gen_idx += 1
         rand_gen_idx = 0
 
-        temperature = cool(initial_temp, temperature, step)
-
         new_state = numpy.copy(state)
         generate_next(state, new_state, random_values)
         new_energy = evaluate(new_state)
         if acceptance_func(energy, new_energy, temperature):
             state = new_state
             energy = new_energy
+
+        temperature = cool(initial_temp, temperature, step)
         step += 1
 
     states[thread_id] = state
