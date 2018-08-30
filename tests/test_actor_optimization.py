@@ -31,7 +31,8 @@ def test_run_opt(worker):
     worker.model_compiled = True
     OptimizationActor.opt_worker = worker
 
-    result = OptimizationActor(WorkerCommand.RunOptimization.value, {})
+    result = OptimizationActor(WorkerCommand.RunOptimization.value, {
+                               'params': {'optimization': {}}})
 
     worker.run.assert_called_once()
     assert type(result) == dict

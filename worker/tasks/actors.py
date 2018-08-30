@@ -3,6 +3,7 @@ import psutil
 import GPUtil
 import logging
 import dramatiq
+import traceback
 
 from enum import Enum
 from pyhocon import ConfigTree, ConfigFactory
@@ -72,14 +73,15 @@ class OptimizationActor(GenericActor):
         if cmd == WorkerCommand.DeployModel.value:
             try:
                 return self.opt_worker.compile_model(payload)
-            except Exception as e:
-                return str(e)
+            except Exception:
+                # TODO test this
+                return traceback.format_exc()
         elif cmd == WorkerCommand.RunOptimization.value:
             if self.opt_worker.model_compiled is False:
                 raise AssertionError(
                     'Tried to run optimization without deployed model')
 
-            opt_result = self.opt_worker.run(payload)
+            opt_result = self.opt_worker.run(payload['params']['optimization'])
             return opt_result.to_dict()
         else:
             raise AttributeError('Command does not exist: ' + str(cmd))
