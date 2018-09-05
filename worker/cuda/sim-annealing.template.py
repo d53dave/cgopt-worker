@@ -17,31 +17,32 @@ $globals
 
 
 @cuda.jit(device=True)
-# @cuda.jit
 $initialize
 
 
 @cuda.jit(device=True)
-# @cuda.jit
 $cool
 
 
 @cuda.jit(device=True)
-# @cuda.jit
 $generate_next
 
 
 @cuda.jit(device=True)
-# @cuda.jit
 $evaluate
 
 
 @cuda.jit(device=True)
-# @cuda.jit
 $acceptance_func
 
 
 $empty_state
+
+
+@cuda.jit(device=True)
+def copy_state(b, a):
+    for i in range(len(b)):
+        a[i] = b[i]
 
 
 @cuda.jit
@@ -73,7 +74,7 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
             rand_gen_idx += 1
         rand_gen_idx = 0
 
-        new_state = numpy.copy(state)
+        new_state = cuda.local.array($dim, $precision)
         generate_next(state, new_state, random_values)
         new_energy = evaluate(new_state)
         if acceptance_func(energy, new_energy, temperature):
@@ -83,6 +84,6 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
         temperature = cool(initial_temp, temperature, step)
         step += 1
 
-    states[thread_id] = state
-    values[thread_id] = energy
     cuda.syncthreads()
+    copy_state(state, states[thread_id])
+    values[thread_id] = energy
