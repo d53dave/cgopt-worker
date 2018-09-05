@@ -74,7 +74,7 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
             rand_gen_idx += 1
         rand_gen_idx = 0
 
-        new_state = cuda.local.array($dim, $precision)
+        new_state = cuda.local.array($state_shape, $precision)
         generate_next(state, new_state, random_values)
         new_energy = evaluate(new_state)
         if acceptance_func(energy, new_energy, temperature):

@@ -50,6 +50,7 @@ class ModuleGenerator():
         opt_configuration['precision'] = model['precision']
         opt_configuration['dim'] = str(model['dimensions'])
         opt_configuration['globals'] = model['globals']
+        opt_configuration['state_shape'] = str(model['state_shape'])
         opt_configuration['cool'] = model['functions']['cool']
         opt_configuration['initialize'] = model['functions']['initialize']
         opt_configuration['generate_next'] = model['functions']['generate_next']

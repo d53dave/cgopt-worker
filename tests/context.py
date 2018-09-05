@@ -19,6 +19,7 @@ test_model_dict = {
     'dimensions': 2,
     'distribution': 'normal',
     'precision': 'float64',
+    'state_shape': 2,
     'globals': '\nm = 5\nc = (1, 2, 5, 2, 3)\nA = ((3, 5), (5, 2), (2, 1), (1, 4), (7, 9))\n',
     'functions': {
         'distribution': 'def distribution() -> RandomDistribution:\n    return RandomDistribution.Normal\n',
