@@ -61,6 +61,8 @@ def test_run_opt_on_gpu():
 
     assert opt_result.values is not None
     assert len(opt_result.values) == 64
+
+    good_vals = []
     for value in opt_result.values:
         print(value)
         if value == pytest.approx(-1.4, 1e-2):
