@@ -45,12 +45,19 @@ def copy_state(b, a):
         a[i] = b[i]
 
 
+@cuda.jit(device=True)
+def clamp(min_val, val, max_val):
+    if val < min_val:
+        return min_val
+    elif val > max_val:
+        return max_val
+    else:
+        return val
+
+
 @cuda.jit
 def simulated_annealing(max_steps, initial_temp, rands, states, values):
-    tx = cuda.threadIdx.x
-    ty = cuda.blockIdx.x
-    bw = cuda.blockDim.x
-    thread_id = tx + ty * bw
+    thread_id = cuda.grid(1)
 
     if thread_id >= states.size:
         return
@@ -77,7 +84,7 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
         new_state = cuda.local.array($state_shape, $precision)
         generate_next(state, new_state, random_values)
         new_energy = evaluate(new_state)
-        if acceptance_func(energy, new_energy, temperature):
+        if acceptance_func(energy, new_energy, temperature, $random_gen_type$precision(rands, thread_id)):
             state = new_state
             energy = new_energy
 
