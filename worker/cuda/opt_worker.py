@@ -80,14 +80,13 @@ class OptimizationWorker():
             log.exception(e)
             return str(e)
 
-    def _get_blocks_per_grid(self, array_size, threads_per_block) -> int:
+    def _get_blocks_per_grid(self, array_size: int, threads_per_block: int) -> int:
         return (array_size + (threads_per_block - 1)) // threads_per_block
 
     def run(self, opt_params) -> OptResult:
         try:
             assert self.opt_module is not None
 
-            dimensions: int = int(self.opt_configuration['dim'])
             precision = np.float64 if self.opt_configuration['precision'] == 'float64' else np.float32
 
             max_steps = opt_params.get(
@@ -102,20 +101,22 @@ class OptimizationWorker():
                 'blocks_per_grid')
 
             if blocks_per_grid is None:
+                print('blocks_per_grid is None')
                 blocks_per_grid = self._get_blocks_per_grid(
                     thread_count, threads_per_block)
 
-            if _is_debug_run():
-                blocks_per_grid = 1
-                threads_per_block = 1
-                thread_count = 1
+            # if setting thread count < threads_per_block, the SA algorithm
+            # will run out of bounds with the rngs, so we decrease block size
+            if thread_count < threads_per_block:
+                threads_per_block = thread_count
 
             empty_state = self.opt_module.empty_state()  # type: ignore
 
             result_size: int = thread_count
             values = np.array([0.0] * result_size, dtype=precision)
             states = np.array([empty_state] * result_size)  # type: ignore
-            rng_states = create_xoroshiro128p_states(dimensions, seed=1)
+            # TODO: pass seed in opt_params
+            rng_states = create_xoroshiro128p_states(result_size, seed=1)
 
             self.opt_module.simulated_annealing[blocks_per_grid, threads_per_block](  # type: ignore
                 max_steps, initial_temp, rng_states, states, values)
