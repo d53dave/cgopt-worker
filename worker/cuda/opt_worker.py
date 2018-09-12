@@ -101,7 +101,6 @@ class OptimizationWorker():
                 'blocks_per_grid')
 
             if blocks_per_grid is None:
-                print('blocks_per_grid is None')
                 blocks_per_grid = self._get_blocks_per_grid(
                     thread_count, threads_per_block)
 
@@ -113,7 +112,7 @@ class OptimizationWorker():
             empty_state = self.opt_module.empty_state()  # type: ignore
 
             result_size: int = thread_count
-            values = np.array([0.0] * result_size, dtype=precision)
+            values = np.zeros(result_size, dtype=precision)
             states = np.array([empty_state] * result_size)  # type: ignore
             # TODO: pass seed in opt_params
             rng_states = create_xoroshiro128p_states(result_size, seed=1)

@@ -19,10 +19,9 @@ class ModuleGenerator():
         return Template(self.opt_template).substitute(model)
 
     def _create_module(self, name: str, source: str) -> Any:
-        module = types.ModuleType(name)
-        log.debug('Compiled numba/cuda module:\n{}'.format(source))
+        module = sys.modules[name] = types.ModuleType(name)
         exec(source, module.__dict__)
-        sys.modules[name] = module
+        log.debug('Compiled numba/cuda module:\n{}'.format(source))
 
         return module
 

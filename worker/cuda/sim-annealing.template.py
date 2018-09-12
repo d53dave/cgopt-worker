@@ -16,6 +16,16 @@ from typing import MutableSequence, Sequence, Any, Tuple
 $globals
 
 
+@cuda.jit('$precision($precision, $precision, $precision)', device=True, inline=True)
+def clamp(min_val, val, max_val):
+    if val < min_val:
+        return min_val
+    elif val > max_val:
+        return max_val
+    else:
+        return val
+
+
 @cuda.jit(device=True)
 $initialize
 
@@ -24,7 +34,7 @@ $initialize
 $cool
 
 
-@cuda.jit(device=True)
+@cuda.jit('void($precision[::1], $precision[::1], $precision[::1])', device=True)
 $generate_next
 
 
@@ -39,20 +49,10 @@ $acceptance_func
 $empty_state
 
 
-@cuda.jit(device=True)
+@cuda.jit(device=True, inline=True)
 def copy_state(b, a):
     for i in range(len(b)):
         a[i] = b[i]
-
-
-@cuda.jit(device=True)
-def clamp(min_val, val, max_val):
-    if val < min_val:
-        return min_val
-    elif val > max_val:
-        return max_val
-    else:
-        return val
 
 
 @cuda.jit
@@ -70,18 +70,20 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
         rand_gen_idx += 1
     rand_gen_idx = 0
 
-    state = states[thread_id]
+    state = cuda.local.array($state_shape, $precision)
+    new_state = cuda.local.array($state_shape, $precision)
+
     initialize(state, random_values)
     energy = evaluate(state)
 
     temperature = initial_temp
+
     while(step < max_steps and temperature > 0):
         while(rand_gen_idx < $dim):
             random_values[rand_gen_idx] = $random_gen_type$precision(rands, thread_id)
             rand_gen_idx += 1
         rand_gen_idx = 0
 
-        new_state = cuda.local.array($state_shape, $precision)
         generate_next(state, new_state, random_values)
         new_energy = evaluate(new_state)
         if acceptance_func(energy, new_energy, temperature, $random_gen_type$precision(rands, thread_id)):
