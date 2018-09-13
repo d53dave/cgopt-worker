@@ -30,12 +30,12 @@ def test_run_opt_on_cpu():
     worker.compile_model(test_model_dict)
     opt_result = worker.run({
         'initial_temp': 100.0,
-        'max_steps': 200,
-        'thread_count': 16,
+        'max_steps': 500,
+        'thread_count': 32,
     })
 
     assert opt_result.values is not None
-    assert len(opt_result.values) == 16
+    assert len(opt_result.values) == 32
 
     good_vals = []
 
