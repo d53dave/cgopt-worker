@@ -20,16 +20,16 @@ test_model_dict = {
     'distribution': 'normal',
     'precision': 'float32',
     'state_shape': 2,
-    'globals': '\nm = 5\nc = (1, 2, 5, 2, 3)\nA = ((3, 5), (5, 2), (2, 1), (1, 4), (7, 9))\n',
+    'globals': '\na = 20\nb = 0.2\nc = 2 * pi\nmax_steps = 20000\n',
     'functions': {
         'distribution': 'def distribution() -> RandomDistribution:\n    return RandomDistribution.Normal\n',
         'precision': 'def precision() -> Precision:\n    return Precision.Float32\n',
         'dimensions': 'def dimensions() -> int:\n    return 2\n',
-        'initialize': 'def initialize(state: MutableSequence, randoms: Sequence[float]) -> None:\n    for i in range(len(randoms)):\n        state[i] = randoms[i]\n    return\n',
-        'generate_next': 'def generate_next(state: Sequence, new_state: MutableSequence, randoms: Sequence[float]) -> Any:\n    for i in range(len(state)):\n        new_state[i] = clamp(0, 0.2 * (state[i] + randoms[i]), 10)\n    return\n',
-        'cool': 'def cool(initial_temp: float, old_temp: float, step: int) -> float:\n    return initial_temp * math.pow(0.97, step)\n',
-        'evaluate': 'def evaluate(state: Sequence) -> float:\n    result = 0.0\n    for i in range(m):  # sum from 0 to m-1\n        t2 = 0.0\n        for j in range(2):  # sum from 0..-1\n            s_j = state[j]\n            a_ij = A[i][j]\n            t2 += (s_j - a_ij)**2\n        t2 = -(1 / pi) * t2\n        t3 = 0.0\n        for j in range(2):  # sum from 0..d-1\n            t3 += (state[j] - A[i][j])**2\n        t3 = pi * t3\n        result += c[i] * math.exp(t2) * math.cos(t3)\n    return -result\n',
-        'acceptance_func': 'def acceptance_func(e1: float, e2: float, temp: float, rnd: float) -> bool:\n    x = clamp(-88.7227, -(e2 - e1) / temp, 88.7227)\n    return math.exp(x) > rnd',
+        'initialize': 'def initialize(state: MutableSequence, randoms: Sequence[float]) -> None:\n    for i in range(len(randoms)):\n        state[i] = clamp(-32, 16 * randoms[i], 32)\n    return\n',
+        'generate_next': 'def generate_next(state: Sequence, new_state: MutableSequence, randoms: Sequence[float], step) -> Any:\n    for i in range(len(state)):\n        \n        new_state[i] = clamp(-32, 8 * randoms[i], 32)\n    return\n',
+        'cool': 'def cool(initial_temp: float, old_temp: float, step: int) -> float:\n    return initial_temp * math.pow(0.9, step)\n',
+        'evaluate': 'def evaluate(state: Sequence) -> float:\n    d = 2\n    t1_sum = 0.0\n    t2_sum = 0.0\n\n    for i in range(d):\n        t1_sum += state[i] * state[i]\n        t2_sum += math.cos(c * state[i])\n\n    t1 = -a * math.exp(-b * math.sqrt(t1_sum / d))\n\n    t2 = math.exp(t2_sum / d)\n\n    return t1 - t2 + a + 2.71828182846\n',
+        'acceptance_func': 'def acceptance_func(e_old: float, e_new: float, temp: float, rnd: float) -> bool:\n    x = clamp(-80, (e_old - e_new) / temp, 0.1)\n    return math.exp(x) > rnd',
         'empty_state': 'def empty_state() -> Tuple:\n    return (0.0, 0.0)\n',
     }
 }

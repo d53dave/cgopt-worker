@@ -28,21 +28,25 @@ def test_run_opt_without_deploy():
 def test_run_opt_on_cpu():
     worker = OptimizationWorker(conf=internal_config)
     worker.compile_model(test_model_dict)
+
+    thread_count = 16
     opt_result = worker.run({
-        'initial_temp': 100.0,
-        'max_steps': 500,
-        'thread_count': 32,
+        'initial_temp': 10.0,
+        'random_seed': -919,
+        'max_steps': 10000,
+        'thread_count': thread_count
     })
 
     assert opt_result.values is not None
-    assert len(opt_result.values) == 32
+    assert len(opt_result.values) == thread_count
 
     good_vals = []
 
     # We do not expect all threads to converge, but we do expect at least one
+    # to be within ±1e-1 of the known optimum 0
     for value in opt_result.values:
         print(value)
-        if value == pytest.approx(-1.4, 1e-2):
+        if value == pytest.approx(0, abs=1e-1):
             good_vals.append(value)
 
     assert len(good_vals) > 0
@@ -54,9 +58,9 @@ def test_run_opt_on_gpu():
     worker = OptimizationWorker(conf=internal_config)
     worker.compile_model(test_model_dict)
     opt_result = worker.run({
-        'initial_temp': 100.0,
-        'max_steps': 1000,
-        'thread_count': 64
+        'initial_temp': 10.0,
+        'max_steps': 10000,
+        'thread_count': 256
     })
 
     assert opt_result.values is not None
@@ -65,7 +69,7 @@ def test_run_opt_on_gpu():
     good_vals = []
     for value in opt_result.values:
         print(value)
-        if value == pytest.approx(-1.4, 1e-2):
+        if value == pytest.approx(0, abs=1e-1):
             good_vals.append(value)
 
     assert len(good_vals) > 0

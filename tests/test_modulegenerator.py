@@ -1,4 +1,5 @@
 import sys
+import pytest
 
 from context import ModuleGenerator, test_model_dict
 from pyhocon import ConfigFactory
@@ -21,8 +22,8 @@ def test_compile():
 
     # pylint: disable=E1101
     assert module.empty_state() == (0.0, 0.0)  # type: ignore
-    assert module.m == 5
-    assert module.c == (1, 2, 5, 2, 3)
-    assert module.A == ((3, 5), (5, 2), (2, 1), (1, 4), (7, 9))
+    assert module.a == 20
+    assert module.b == 0.2
+    assert module.c == pytest.approx(6.28, abs=1e-2)
 
     assert 'csaopt_cuda_opt' in sys.modules
