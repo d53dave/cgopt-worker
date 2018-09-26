@@ -9,6 +9,7 @@ import cmath
 
 from math import pi
 from numba import cuda, $precision
+from numba.cuda.random import xoroshiro128p_uniform_$precision
 from numba.cuda.random import $random_gen_type$precision
 
 from typing import MutableSequence, Sequence, Any, Tuple
@@ -30,7 +31,7 @@ def clamp(min_val, val, max_val):
 $initialize
 
 
-@cuda.jit(device=True)
+@cuda.jit(device=True, inline=True)
 $cool
 
 
@@ -56,7 +57,7 @@ def copy_state(b, a):
 
 
 @cuda.jit
-def simulated_annealing(max_steps, initial_temp, rands, states, values):
+def simulated_annealing(max_steps, initial_temp, min_temp, rands, states, values):
     thread_id = cuda.grid(1)
 
     if thread_id >= states.size:
@@ -78,15 +79,15 @@ def simulated_annealing(max_steps, initial_temp, rands, states, values):
 
     temperature = initial_temp
 
-    while(step < max_steps and temperature > 0):
+    while(step < max_steps and temperature > min_temp):
         while(rand_gen_idx < $dim):
             random_values[rand_gen_idx] = $random_gen_type$precision(rands, thread_id)
             rand_gen_idx += 1
         rand_gen_idx = 0
 
-        generate_next(state, new_state, random_values)
+        generate_next(state, new_state, random_values, step)
         new_energy = evaluate(new_state)
-        if acceptance_func(energy, new_energy, temperature, $random_gen_type$precision(rands, thread_id)):
+        if acceptance_func(energy, new_energy, temperature, xoroshiro128p_uniform_$precision(rands, thread_id)):
             state = new_state
             energy = new_energy
 
