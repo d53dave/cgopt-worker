@@ -93,12 +93,15 @@ class OptimizationWorker():
                 'max_steps', self.conf['defaults.max_steps'])
             initial_temp = opt_params.get(
                 'initial_temp', self.conf['defaults.initial_temp'])
+            min_temp = opt_params.get(
+                'min_temp', 0.0)
             thread_count = opt_params.get(
                 'thread_count', self.conf['defaults.thread_count'])
             threads_per_block = opt_params.get(
                 'threads_per_block', self.conf['defaults.threads_per_block'])
             blocks_per_grid = opt_params.get(
                 'blocks_per_grid')
+            seed = opt_params.get('random_seed', 42)
 
             if blocks_per_grid is None:
                 blocks_per_grid = self._get_blocks_per_grid(
@@ -114,11 +117,10 @@ class OptimizationWorker():
             result_size: int = thread_count
             values = np.zeros(result_size, dtype=precision)
             states = np.array([empty_state] * result_size)  # type: ignore
-            # TODO: pass seed in opt_params
-            rng_states = create_xoroshiro128p_states(result_size, seed=1)
+            rng_states = create_xoroshiro128p_states(result_size, seed=seed)
 
             self.opt_module.simulated_annealing[blocks_per_grid, threads_per_block](  # type: ignore
-                max_steps, initial_temp, rng_states, states, values)
+                max_steps, initial_temp, min_temp, rng_states, states, values)
 
             return OptResult(values, states, None)
         except Exception as e:
