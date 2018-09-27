@@ -13,13 +13,9 @@ from typing import Dict, Any, Tuple, Type, Optional
 
 from .modulegenerator import ModuleGenerator
 
-
 log = logging.getLogger(__name__)
 
-Failure = Optional[
-    Tuple[Optional[Type[BaseException]],
-          Optional[BaseException],
-          str]]
+Failure = Optional[Tuple[Optional[Type[BaseException]], Optional[BaseException], str]]
 
 
 def _is_debug_run():
@@ -27,25 +23,23 @@ def _is_debug_run():
 
 
 class OptResult():
-    def __init__(self, values: np.ndarray, states: np.ndarray, failure: Failure=None) -> None:
+    def __init__(self, values: np.ndarray, states: np.ndarray, failure: Failure = None) -> None:
         self.values: np.ndarray = values
         self.states: np.ndarray = states
         self.failure: Failure = failure
 
     def to_dict(self):
-        data = {
-            'values': self.values,
-            'states': self.states
-        }
+        data = {'values': self.values, 'states': self.states}
 
         if self.failure is not None:
             data['failure'] = {
-                'type': str(self.failure[0]),       # pylint: disable=E1136
+                'type': str(self.failure[0]),  # pylint: disable=E1136
                 'exception': str(self.failure[1]),  # pylint: disable=E1136
-                'message': self.failure[2]          # pylint: disable=E1136
+                'message': self.failure[2]  # pylint: disable=E1136
             }
 
         return data
+
 
 # TODO: add this to the model documentation
 # Numba(like cuRAND) uses the Box - Muller transform
@@ -57,7 +51,6 @@ class OptResult():
 
 
 class OptimizationWorker():
-
     def __init__(self, conf: ConfigTree) -> None:
         self.conf = conf['optimization']
         self.gen = ModuleGenerator(conf['cuda'])
@@ -68,12 +61,10 @@ class OptimizationWorker():
 
     def compile_model(self, model: Dict[str, Any]) -> str:
         try:
-            self.opt_configuration = ModuleGenerator.extract_opt_configuration(
-                model)
+            self.opt_configuration = ModuleGenerator.extract_opt_configuration(model)
             self.opt_module = self.gen.cuda_module(  # type: ignore
                 self.opt_configuration)
-            log.info('Model "%s" was successfully loaded loaded as a module',
-                     self.opt_configuration['name'])
+            log.info('Model "%s" was successfully loaded loaded as a module', self.opt_configuration['name'])
             self.model_compiled = True
             return 'model_deployed'
         except Exception as e:
@@ -89,23 +80,16 @@ class OptimizationWorker():
 
             precision = np.float64 if self.opt_configuration['precision'] == 'float64' else np.float32
 
-            max_steps = opt_params.get(
-                'max_steps', self.conf['defaults.max_steps'])
-            initial_temp = opt_params.get(
-                'initial_temp', self.conf['defaults.initial_temp'])
-            min_temp = opt_params.get(
-                'min_temp', 0.0)
-            thread_count = opt_params.get(
-                'thread_count', self.conf['defaults.thread_count'])
-            threads_per_block = opt_params.get(
-                'threads_per_block', self.conf['defaults.threads_per_block'])
-            blocks_per_grid = opt_params.get(
-                'blocks_per_grid')
-            seed = opt_params.get('random_seed', 42)
+            max_steps = opt_params.get('max_steps', self.conf['defaults.max_steps'])
+            initial_temp = opt_params.get('initial_temp', self.conf['defaults.initial_temp'])
+            min_temp = float(opt_params.get('min_temp', 0.0))
+            thread_count = opt_params.get('thread_count', self.conf['defaults.thread_count'])
+            threads_per_block = opt_params.get('threads_per_block', self.conf['defaults.threads_per_block'])
+            blocks_per_grid = opt_params.get('blocks_per_grid')
+            seed = int(opt_params.get('random_seed', 42))
 
             if blocks_per_grid is None:
-                blocks_per_grid = self._get_blocks_per_grid(
-                    thread_count, threads_per_block)
+                blocks_per_grid = self._get_blocks_per_grid(thread_count, threads_per_block)
 
             # if setting thread count < threads_per_block, the SA algorithm
             # will run out of bounds with the rngs, so we decrease block size
