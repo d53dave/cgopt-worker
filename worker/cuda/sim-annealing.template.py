@@ -35,7 +35,7 @@ $initialize
 $cool
 
 
-@cuda.jit('void($precision[::1], $precision[::1], $precision[::1])', device=True)
+@cuda.jit('void($precision[::1], $precision[::1], $precision[::1], int64)', device=True)
 $generate_next
 
 
