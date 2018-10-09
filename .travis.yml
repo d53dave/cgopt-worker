@@ -20,7 +20,7 @@ before_script:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda env create --name csaopt-worker-travisci
+  - conda env create --name csaopt-worker-travisci -f environment.dev.yml
   - source activate csaopt-worker-travisci
   - ./cc-test-reporter before-build
 
