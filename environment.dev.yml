@@ -1,0 +1,25 @@
+name: csaopt-worker
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - numba=0.40.0
+  - cudatoolkit=8.0
+  - msgpack-python=0.5.6
+  - msgpack-numpy=0.4.3.2
+  - pyhocon=0.3.47 
+  - sphinx=1.8.1
+  - flake8=3.5.0
+  - psutil=5.4.7
+  - pip:
+    - gputil==1.3.0
+    - mypy==0.620
+    - dramatiq[redis]==1.3.0
+    - coverage==4.5.1
+    - coveralls==1.5.1
+    - flake8==3.4.1
+    - docker==3.5.0
+    - yapf==0.24.0
+    - pytest==3.8.1
+    - pytest-cov==2.6.0
+    - pytest-mock==1.10.0
