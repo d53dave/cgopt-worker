@@ -8,7 +8,7 @@ import math
 import cmath
 
 from math import pi
-from numba import cuda, $precision
+from numba import cuda, $precision, uint32
 from numba.cuda.random import xoroshiro128p_uniform_$precision
 from numba.cuda.random import $random_gen_type$precision
 
@@ -35,7 +35,7 @@ $initialize
 $cool
 
 
-@cuda.jit('void($precision[::1], $precision[::1], $precision[::1], int64)', device=True)
+@cuda.jit('void($precision[::1], $precision[::1], $precision[::1], uint32)', device=True)
 $generate_next
 
 
@@ -63,7 +63,8 @@ def simulated_annealing(max_steps, initial_temp, min_temp, rands, states, values
     if thread_id >= states.size:
         return
 
-    step = 0
+    step = uint32(0)
+    u_max_steps = uint32(max_steps)
     rand_gen_idx = 0
     random_values = cuda.local.array($dim, dtype=$precision)
     while(rand_gen_idx < $dim):
@@ -79,7 +80,7 @@ def simulated_annealing(max_steps, initial_temp, min_temp, rands, states, values
 
     temperature = initial_temp
 
-    while(step < max_steps and temperature > min_temp):
+    while(step < u_max_steps and temperature > min_temp):
         while(rand_gen_idx < $dim):
             random_values[rand_gen_idx] = $random_gen_type$precision(rands, thread_id)
             rand_gen_idx += 1
