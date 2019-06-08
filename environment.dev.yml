@@ -19,7 +19,6 @@ dependencies:
       - dramatiq[redis]==1.3.0
       - coverage==4.5.1
       - coveralls==1.5.1
-      - flake8==3.4.1
       - docker==3.5.0
       - yapf==0.24.0
       - pytest==3.8.1
